@@ -1,0 +1,8 @@
+{application, lfecljapp,
+ [{description, "App Release"},
+  {vsn, "1"},
+  {modules, [lfecljapp, lfeclj-sup, lfeclj-util, lfeclj-cfg]},
+  {registered, [ch3]},
+  {applications, [kernel, stdlib, sasl]},
+  {mod, {lfecljapp,[]}}
+ ]}.

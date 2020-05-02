@@ -1,0 +1,63 @@
+% SERVER
+%
+%
+%
+
+% In addition to a Cuneiform interpreter the script requires the
+% following tools:
+% - Racket 7.2
+%
+%--------------------------------------------------------------
+
+%%====================================================================
+%% Functions
+%%====================================================================
+
+def server( request: Str
+            response: Str ) -> <response : File>
+
+def get-response( response : [File] ) -> <response : File>
+in Bash *{
+  response=data.json
+}*
+
+def range( size : Str, n : Str ) -> <lo-lst : [Str], hi-lst : [Str]>
+in Racket *{
+  (require (only-in racket/list range))
+  (define s (string->number size))
+  (define step (/ s (string->number n)))
+  (define request (map number->string (map floor (range 0 s step))))
+  (define response (append (cdr request) (list size)))
+}*
+
+
+%%====================================================================
+%% Input data
+%%====================================================================
+
+let request : Str = 'data.json';
+
+
+%%====================================================================
+%% Parameters
+%%====================================================================
+
+let request : Str;
+let response : Str;
+
+
+%%====================================================================
+%% Dependencies
+%%====================================================================
+
+
+
+
+let <response = result : Str> =
+  get-response( request = "data.json");
+
+%%====================================================================
+%% Query
+%%====================================================================
+
+result;

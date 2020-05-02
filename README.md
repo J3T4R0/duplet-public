@@ -1,65 +1,116 @@
-# Serverless Racket Application with Azure Functions Custom Handler
+# lfecljapp
 
-This sample application uses Azure Functions Custom Handlers to run a Racket web application as a serverless function.
+<a href="resources/images/LispFlavoredErlangClojure-medium-square.png">
+<img src="resources/images/LispFlavoredErlangClojure-small-square.png" />
+</a>
 
-For more details on how this application was built, see the [Serverless Racket Applications using Azure Functions Custom Handlers blog post](http://luisquintanilla.me/2020/03/21/serverless-racket-azure-functions-custom-handlers/)
+*LFE-Clojure (JVM) Interop using JInterface*
 
-## Prerequisites
+## Introduction
 
-This project was built on a Windows 10 PC, but it should work cross-platform on Mac and Linux.
+This project is a port of Maxim Molchanov's example Erlang + Clojure interop
+project (via JInterface). Only minor changes were made to the Clojure code.
+The Erlang code was completely replaced with LFE.
 
-- [Node.js](https://nodejs.org/en/)
-- [Racket](https://download.racket-lang.org/)
-- [Azure Functions Core Tools](https://docs.microsoft.com/azure/azure-functions/functions-run-local). This sample uses v2.x of the tool.
+This project demonstrates how one can:
 
-## Package the application
+1. Create a Clojure project which utilizes Erlang JInterface to communicate
+   with LFE nodes,
+1. Start a supervised Clojure node in LFE,
+1. Send a message to Clojure nodes from LFE, and
+1. Receive responses from the Clojure nodes in LFE.
 
-Enter the following command into the command prompt:
 
-```bash
-raco exe server.rkt
-```
+### Dependencies
 
-## Run the server (not as an Azure Function)
+#### LFE Side of the House
 
-Enter the following command into the command prompt.
+* Erlang
+* ``lfetool`` + ``rebar``
 
-```bash
-server.exe
-```
+#### Clojure Side of the House
 
-Using an application like Postman or Insomnia, make a `GET` request to `localhost:7071/values`.
+* Java
+* ``lein``
 
-The response should look the one below:
+## Building
 
-```json
-{
-    "value": [
-        1,
-        2,
-        3
-    ]
-}
-```
-
-## Run Azure Function
-
-Enter the following command into the command prompt from the root application directory.
+To get started, build the Clojure Uberjar for ``cljnode`` and compile the
+Erlang source files:
 
 ```bash
-func start
+$ make compile
 ```
 
-Using an application like Postman or Insomnia, make a `GET` request to `localhost:7071/api/values`.
+## Running
 
-The response should look the one below:
+Once everything has compiled successfully, you can start an Erlang shell and
+then bring the app up:
 
-```json
-{
-    "value": [
-        1,
-        2,
-        3
-    ]
-}
+```bash
+$ make repl
 ```
+
+```lfe
+(lfenode@cahwsx01)> (lfeclj-app:start)
+ok
+```
+
+Alternatively, you can use the ``dev`` make target which will start the
+lfecljapp for you automatically:
+
+```bash
+$ make dev
+```
+
+Once the app has started, you will see output like the following (elided):
+
+```
+(lfenode@cahwsx01)>
+14:03:52.849 [info] Application lager started on node lfenode@cahwsx01
+14:03:52.855 [info] Starting clojure app with cmd: "java ..."
+```
+
+At this point, you are in the shell, and before too long you should also see
+a log message display showing the successful start of the Clojure node:
+
+```
+14:03:52.856 [info] Application lfecljapp started on node lfenode@cahwsx01
+14:03:55.898 [info] Connection to java node established, pid: <11113.1.0>
+```
+
+## Using
+
+Now that you've got both ends of the connection up, you can take it for a
+spin with a ping command:
+
+```cl
+(lfenode@cahwsx01)> (lfecljapp:ping "clj-node@cahwsx01" "clj-mbox")
+#(ping <0.83.0>)
+```
+
+The node name used in the example above was taken from the output when the
+Clojure node was started up. In particular, look for the line beginning with
+``INFO: Starting clojure app ...`` and the value associated with the ``-Dnode``
+parameter. That's your destination node in this case.
+
+To see the response from the Clojure node, you'll need to flush the shell,
+since the Clojure port sends its responses to the caller, and in this case the
+caller is the LFE REPL:
+
+```cl
+(lfenode@cahwsx01)> (c:flush)
+Shell got {pong,<11113.1.0>}
+ok
+```
+
+Hurray! A successful response from the Clojure node!
+
+## Fun for the Future
+
+Here are some things I'd like to play with in this project:
+
+* Setting up some example long-running computations in Clojure.
+* Spawn multiple nodes and distribute computations across an LFE cluster.
+* Use ``lfecljapp`` as a proxy to a Storm cluster, and explores ways in which
+  it might be useful to interact with Storm from LFE.
